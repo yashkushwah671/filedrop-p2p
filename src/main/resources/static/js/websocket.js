@@ -14,6 +14,9 @@ class SignalingClient {
     }
 
     connect() {
+        if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
+            return Promise.resolve();
+        }
         return new Promise((resolve, reject) => {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsUrl = `${protocol}//${window.location.host}/ws`;
@@ -25,6 +28,10 @@ class SignalingClient {
                 console.log('[Signaling] WebSocket connected.');
                 this.isConnected = true;
                 this.startHeartbeat();
+                if (this.roomId && this.role) {
+                    console.log(`[Signaling] Automatically rejoining room ${this.roomId} as ${this.role}`);
+                    this.join(this.roomId, this.role, this.pin);
+                }
                 resolve();
             };
 
@@ -50,6 +57,14 @@ class SignalingClient {
                 this.emit('close', event);
             };
         });
+    }
+
+    removeAllListeners(type) {
+        if (type) {
+            this.handlers.delete(type.toLowerCase());
+        } else {
+            this.handlers.clear();
+        }
     }
 
     join(roomId, role, pin = null) {

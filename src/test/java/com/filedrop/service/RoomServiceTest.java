@@ -77,7 +77,7 @@ public class RoomServiceTest {
     }
 
     @Test
-    void testRegisterPeers_AndFullRoomException() {
+    void testRegisterPeers() {
         RoomResponse created = roomService.createRoom(new CreateRoomRequest());
         String code = created.getRoomCode();
 
@@ -90,9 +90,10 @@ public class RoomServiceTest {
         assertThat(room.getReceiverSessionId()).isEqualTo("sess-receiver-1");
         assertThat(room.getStatus()).isEqualTo(RoomStatus.CONNECTED);
 
-        // Third peer attempts to join as receiver -> should throw RoomFullException
-        assertThatThrownBy(() -> roomService.registerPeerConnection(code, "receiver", "sess-receiver-2"))
-                .isInstanceOf(RoomFullException.class);
+        // Receiver reconnects with new session
+        room = roomService.registerPeerConnection(code, "receiver", "sess-receiver-2");
+        assertThat(room.getReceiverSessionId()).isEqualTo("sess-receiver-2");
+        assertThat(room.getStatus()).isEqualTo(RoomStatus.CONNECTED);
     }
 
     @Test

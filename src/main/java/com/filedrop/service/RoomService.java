@@ -106,9 +106,6 @@ public class RoomService {
         if ("sender".equalsIgnoreCase(role)) {
             room.setSenderSessionId(sessionId);
         } else if ("receiver".equalsIgnoreCase(role)) {
-            if (room.getReceiverSessionId() != null && !room.getReceiverSessionId().equals(sessionId)) {
-                throw new RoomFullException("Room " + roomCode + " already has a connected receiver.");
-            }
             room.setReceiverSessionId(sessionId);
         }
 

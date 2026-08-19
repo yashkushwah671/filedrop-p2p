@@ -20,12 +20,20 @@ class WebRTCManager {
             iceCandidatePoolSize: 10
         };
 
+        this.signalingListeners = [];
         this.setupSignalingListeners();
     }
 
     setupSignalingListeners() {
+        this.cleanupSignalingListeners();
+
+        const addListener = (type, handler) => {
+            this.signaling.on(type, handler);
+            this.signalingListeners.push({ type, handler });
+        };
+
         // When peer joins and we are the sender (initiator), create and send Offer
-        this.signaling.on('peer-joined', async (msg) => {
+        addListener('peer-joined', async (msg) => {
             console.log('[WebRTC] Peer joined room:', msg);
             if (this.isInitiator) {
                 await this.initiateOffer();
@@ -33,33 +41,43 @@ class WebRTCManager {
         });
 
         // Handle incoming SDP Offer
-        this.signaling.on('offer', async (msg) => {
+        addListener('offer', async (msg) => {
             console.log('[WebRTC] Received remote SDP Offer');
             await this.handleRemoteOffer(msg.payload);
         });
 
         // Handle incoming SDP Answer
-        this.signaling.on('answer', async (msg) => {
+        addListener('answer', async (msg) => {
             console.log('[WebRTC] Received remote SDP Answer');
             await this.handleRemoteAnswer(msg.payload);
         });
 
         // Handle incoming ICE Candidate
-        this.signaling.on('ice-candidate', async (msg) => {
+        addListener('ice-candidate', async (msg) => {
             await this.handleRemoteIceCandidate(msg.payload);
         });
 
         // Handle peer left
-        this.signaling.on('peer-left', (msg) => {
+        addListener('peer-left', (msg) => {
             console.warn('[WebRTC] Peer left room:', msg);
             this.emit('peer-disconnected', msg);
             this.close();
         });
     }
 
+    cleanupSignalingListeners() {
+        if (this.signalingListeners && this.signalingListeners.length > 0) {
+            this.signalingListeners.forEach(({ type, handler }) => {
+                this.signaling.off(type, handler);
+            });
+            this.signalingListeners = [];
+        }
+    }
+
     initializePeerConnection() {
         if (this.peerConnection) {
-            this.close();
+            try { this.peerConnection.close(); } catch (e) {}
+            this.peerConnection = null;
         }
 
         console.log('[WebRTC] Initializing RTCPeerConnection...');
@@ -223,6 +241,7 @@ class WebRTCManager {
     }
 
     close() {
+        this.cleanupSignalingListeners();
         if (this.dataChannel) {
             try { this.dataChannel.close(); } catch (e) {}
             this.dataChannel = null;

@@ -200,6 +200,9 @@ class FileDropApp {
             this.signaling.join(this.roomCode, 'receiver', this.pin);
             this.ui.showToast(`Joining room ${this.roomCode}...`, 'info');
 
+            // Switch receiver immediately to dashboard
+            this.ui.initDashboard('receiver', this.roomCode, []);
+
         } catch (e) {
             console.error('[FileDrop] Join error:', e);
             this.ui.showToast(e.message, 'error');
