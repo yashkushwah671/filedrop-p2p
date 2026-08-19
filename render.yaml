@@ -1,0 +1,22 @@
+# ===================================================================
+# Render Blueprint Specification for FileDrop Web Service
+# ===================================================================
+services:
+  - type: web
+    name: filedrop
+    runtime: docker
+    plan: free
+    region: oregon
+    healthCheckPath: /api/health
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      # Optional external database variables (Uncomment & configure if using MySQL on Render or external provider):
+      # - key: DB_URL
+      #   sync: false
+      # - key: DB_USERNAME
+      #   sync: false
+      # - key: DB_PASSWORD
+      #   sync: false
