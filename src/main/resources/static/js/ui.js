@@ -62,7 +62,6 @@ class UIManager {
 
     initEventListeners() {
         // Navigation buttons
-        document.getElementById('btnNavCreate')?.addEventListener('click', () => this.switchView('create'));
         document.getElementById('btnNavJoin')?.addEventListener('click', () => this.switchView('join'));
         document.getElementById('btnBackFromCreate')?.addEventListener('click', () => this.switchView('landing'));
         document.getElementById('btnBackFromJoin')?.addEventListener('click', () => this.switchView('landing'));

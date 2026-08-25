@@ -66,8 +66,11 @@ class FileDropApp {
     }
 
     setupUIEvents() {
-        // Create Room Button on Landing
+        // Create Room Button on Landing and Nav
         document.getElementById('btnStartCreateFlow')?.addEventListener('click', () => {
+            this.startCreateFlow();
+        });
+        document.getElementById('btnNavCreate')?.addEventListener('click', () => {
             this.startCreateFlow();
         });
 
@@ -161,8 +164,16 @@ class FileDropApp {
             return;
         }
 
-        this.ui.showToast('Waiting for receiver to connect...', 'info');
-        this.ui.logEvent(`Ready to transfer ${this.ui.selectedFiles.length} file(s). Awaiting receiver.`, 'info');
+        if (this.fileEngine && this.fileEngine.dataChannel && this.fileEngine.dataChannel.readyState === 'open') {
+            this.ui.initDashboard('sender', this.roomCode, this.ui.selectedFiles);
+            this.fileEngine.sendFiles(this.ui.selectedFiles).catch(err => {
+                console.error('[FileDrop] File send error:', err);
+                this.ui.showToast(`Transfer error: ${err.message}`, 'error');
+            });
+        } else {
+            this.ui.showToast('Files selected! Waiting for receiver to connect...', 'info');
+            this.ui.logEvent(`Ready to transfer ${this.ui.selectedFiles.length} file(s). Awaiting receiver.`, 'info');
+        }
     }
 
     // =========================================================================
@@ -244,12 +255,17 @@ class FileDropApp {
             this.bindFileEngineEvents();
 
             if (this.role === 'sender') {
-                // Switch sender to dashboard and begin streaming selected files
-                this.ui.initDashboard('sender', this.roomCode, this.ui.selectedFiles);
-                this.fileEngine.sendFiles(this.ui.selectedFiles).catch(err => {
-                    console.error('[FileDrop] File send error:', err);
-                    this.ui.showToast(`Transfer error: ${err.message}`, 'error');
-                });
+                if (this.ui.selectedFiles && this.ui.selectedFiles.length > 0) {
+                    // Switch sender to dashboard and begin streaming selected files
+                    this.ui.initDashboard('sender', this.roomCode, this.ui.selectedFiles);
+                    this.fileEngine.sendFiles(this.ui.selectedFiles).catch(err => {
+                        console.error('[FileDrop] File send error:', err);
+                        this.ui.showToast(`Transfer error: ${err.message}`, 'error');
+                    });
+                } else {
+                    this.ui.showToast('Receiver connected! Please select files and click Start Transfer.', 'success');
+                    this.ui.logEvent('Receiver connected. Select files to start transfer.', 'info');
+                }
             } else {
                 // Switch receiver to dashboard
                 this.ui.initDashboard('receiver', this.roomCode, []);
